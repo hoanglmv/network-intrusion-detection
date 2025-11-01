@@ -9,7 +9,7 @@ import os
 processed_data_dir = "D:\\vhproj\\intrusion-network\\data\\processed"
 train_data_path = os.path.join(processed_data_dir, "train_data.csv")
 test_data_path = os.path.join(processed_data_dir, "test_data.csv")
-model_output_path = "D:\\vhproj\\intrusion-network\\pretrained\\random_forest_model.joblib"
+model_output_path = "D:\\vhproj\\intrusion-network\\trained\\random_forest_model.joblib"
 
 # Load the datasets
 train_df = pd.read_csv(train_data_path)

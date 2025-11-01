@@ -12,7 +12,7 @@ intrusion-network/
 ├── data/
 │   ├── CIC2023/            # Raw dataset (if applicable)
 │   └── processed/          # Processed data files (e.g., data1.csv, train_data.csv, etc.)
-├── pretrained/             # Trained models and label encoders
+├── trained/             # Trained models and label encoders
 │   ├── label_encoder.joblib
 │   ├── linear_regression_model.joblib
 │   ├── random_forest_model.joblib
