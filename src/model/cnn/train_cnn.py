@@ -13,7 +13,7 @@ processed_data_dir = "D:\\vhproj\\intrusion-network\\data\\processed"
 train_data_path = os.path.join(processed_data_dir, "train_data.csv")
 val_data_path = os.path.join(processed_data_dir, "val_data.csv")
 test_data_path = os.path.join(processed_data_dir, "test_data.csv")
-model_output_path = "D:\\vhproj\\intrusion-network\\save_output\\cnn_model.h5"
+model_output_path = "D:\\vhproj\\intrusion-network\\trained\\cnn_model.h5"
 
 # Load the datasets
 train_df = pd.read_csv(train_data_path)
