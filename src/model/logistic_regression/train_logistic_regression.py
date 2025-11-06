@@ -5,11 +5,14 @@ from sklearn.metrics import accuracy_score, classification_report
 import joblib
 import os
 
+# Get the project root directory
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 # Define file paths
-processed_data_dir = "D:\\vhproj\\network-intrusion-detection\\data\\processed"
+processed_data_dir = os.path.join(project_root, "data", "processed")
 train_data_path = os.path.join(processed_data_dir, "train_data.csv")
 test_data_path = os.path.join(processed_data_dir, "test_data.csv")
-model_output_path = "D:\\vhproj\\network-intrusion-detection\\trained\\logistic_regression_model.joblib"
+model_output_path = os.path.join(project_root, "trained", "logistic_regression_model.joblib")
 
 # Load the datasets
 train_df = pd.read_csv(train_data_path)

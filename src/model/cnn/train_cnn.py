@@ -8,12 +8,16 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout
 import os
 
+# Get the project root directory
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 # Define file paths
-processed_data_dir = "D:\\vhproj\\network-intrusion-detection\\data\\processed"
+processed_data_dir = os.path.join(project_root, "data", "processed")
 train_data_path = os.path.join(processed_data_dir, "train_data.csv")
 val_data_path = os.path.join(processed_data_dir, "val_data.csv")
 test_data_path = os.path.join(processed_data_dir, "test_data.csv")
-model_output_path = "D:\\vhproj\\network-intrusion-detection\\trained\\cnn_model.h5"
+model_output_path = os.path.join(project_root, "trained", "cnn_model.h5")
+history_output_path = os.path.join(project_root, "trained", "cnn_history.csv")
 
 # Load the datasets
 train_df = pd.read_csv(train_data_path)
@@ -84,7 +88,7 @@ print(classification_report(y_test, y_pred))
 
 # Save training history
 history_df = pd.DataFrame(history.history)
-history_df.to_csv('D:\\vhproj\\network-intrusion-detection\\trained\\cnn_history.csv', index=False)
+history_df.to_csv(history_output_path, index=False)
 
 # Save the model
 model.save(model_output_path)

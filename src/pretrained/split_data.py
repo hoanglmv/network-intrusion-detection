@@ -4,12 +4,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 import os
 
-# Create directory if it does not exist
-output_dir = 'D:/vhproj/network-intrusion-detection/data/processed'
-os.makedirs(output_dir, exist_ok=True)
+import os
 
-# Load the dataset
-data_path = 'D:/vhproj/network-intrusion-detection/data/processed/data.csv'
+# Get the project root directory
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Define paths relative to the project root
+output_dir = os.path.join(project_root, 'data', 'processed')
+data_path = os.path.join(output_dir, 'data.csv')
 df = pd.read_csv(data_path)
 
 # Encode the 'label' column
