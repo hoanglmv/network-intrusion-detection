@@ -6,18 +6,22 @@ import joblib
 import os
 
 # Define file paths
-processed_data_dir = "D:\\vhproj\\intrusion-network\\data\\processed"
+processed_data_dir = "D:\\vhproj\\network-intrusion-detection\\data\\processed"
 train_data_path = os.path.join(processed_data_dir, "train_data.csv")
 test_data_path = os.path.join(processed_data_dir, "test_data.csv")
-model_output_path = "D:\\vhproj\\intrusion-network\\pretrained\\xgboost_model.joblib"
+val_data_path = os.path.join(processed_data_dir, "val_data.csv")
+model_output_path = "D:\\vhproj\\network-intrusion-detection\\trained\\xgboost_model.joblib"
 
 # Load the datasets
 train_df = pd.read_csv(train_data_path)
+val_df = pd.read_csv(val_data_path)
 test_df = pd.read_csv(test_data_path)
 
 # Separate features and labels
 X_train = train_df.drop('label', axis=1)
 y_train = train_df['label']
+X_val = val_df.drop('label', axis=1)
+y_val = val_df['label']
 X_test = test_df.drop('label', axis=1)
 y_test = test_df['label']
 
@@ -25,8 +29,14 @@ y_test = test_df['label']
 # For multi-class classification, use 'multi:softmax' or 'multi:softprob'
 # And set num_class to the number of unique classes
 num_classes = len(y_train.unique())
-model = XGBClassifier(objective='multi:softmax', num_class=num_classes, n_estimators=100, random_state=42, n_jobs=-1)
-model.fit(X_train, y_train)
+model = XGBClassifier(objective='multi:softmax', num_class=num_classes, n_estimators=100, random_state=42, n_jobs=-1, eval_metric='mlogloss')
+eval_set = [(X_val, y_val)]
+model.fit(X_train, y_train, eval_set=eval_set, verbose=False)
+
+# Save training history
+history = model.evals_result()
+history_df = pd.DataFrame(history['validation_0'])
+history_df.to_csv('D:\\vhproj\\network-intrusion-detection\\trained\\xgboost_history.csv', index=False)
 
 # Make predictions on the test set
 y_pred = model.predict(X_test)

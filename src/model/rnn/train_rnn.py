@@ -9,11 +9,11 @@ from tensorflow.keras.layers import SimpleRNN, Dense, Dropout
 import os
 
 # Define file paths
-processed_data_dir = "D:\\vhproj\\intrusion-network\\data\\processed"
+processed_data_dir = "D:\\vhproj\\network-intrusion-detection\\data\\processed"
 train_data_path = os.path.join(processed_data_dir, "train_data.csv")
 val_data_path = os.path.join(processed_data_dir, "val_data.csv")
 test_data_path = os.path.join(processed_data_dir, "test_data.csv")
-model_output_path = "D:\\vhproj\\intrusion-network\\trained\\rnn_model.h5"
+model_output_path = "D:\\vhproj\\network-intrusion-detection\\trained\\rnn_model.h5"
 
 # Load the datasets
 train_df = pd.read_csv(train_data_path)
@@ -79,6 +79,10 @@ y_pred_probs = model.predict(X_test_reshaped)
 y_pred = np.argmax(y_pred_probs, axis=1)
 print("Classification Report:")
 print(classification_report(y_test, y_pred))
+
+# Save training history
+history_df = pd.DataFrame(history.history)
+history_df.to_csv('D:\\vhproj\\network-intrusion-detection\\trained\\rnn_history.csv', index=False)
 
 # Save the model
 model.save(model_output_path)

@@ -5,43 +5,39 @@ This project implements and evaluates several machine learning models for networ
 ## Project Structure
 
 ```
-intrusion-network/
+network-intrusion-detection/
 ├── .gitignore
 ├── README.md
 ├── requirements.txt
 ├── data/
 │   ├── CIC2023/            # Raw dataset (if applicable)
-│   └── processed/          # Processed data files (e.g., data1.csv, train_data.csv, etc.)
-├── trained/             # Trained models and label encoders
-│   ├── label_encoder.joblib
-│   ├── linear_regression_model.joblib
+│   └── processed/          # Processed data files (e.g., data.csv, train_data.csv, etc.)
+├── trained/             # Trained models and training history
+│   ├── cnn_history.csv
+│   ├── cnn_model.h5
+│   ├── logistic_regression_model.joblib
 │   ├── random_forest_model.joblib
-│   ├── xgboost_model.joblib
-│   └── rnn_model.h5
-│   └── cnn_model.h5
+│   ├── rnn_history.csv
+│   ├── rnn_model.h5
+│   ├── xgboost_history.csv
+│   └── xgboost_model.joblib
 └── src/
-    ├── data/               # Data preprocessing and analysis scripts
-    │   ├── split_data.py
-    │   └── data_analysis.ipynb
+    ├── pretrained/         # Scripts for data preprocessing
+    │   └── split_data.py
     └── model/              # Model training and testing scripts/notebooks
         ├── cnn/
-        │   ├── cnn.ipynb
         │   ├── train_cnn.py
         │   └── test.ipynb
-        ├── linear_regression/
-        │   ├── linear_regression.ipynb
-        │   ├── train_linear_regression.py
+        ├── logistic_regression/
+        │   ├── train_logistic_regression.py
         │   └── test.ipynb
         ├── random_forest/
-        │   ├── random_forest.ipynb
         │   ├── train_random_forest.py
         │   └── test.ipynb
         ├── rnn/
-        │   ├── rnn.ipynb
         │   ├── train_rnn.py
         │   └── test.ipynb
         └── xgboost/
-            ├── xgboost.ipynb
             ├── train_xgboost.py
             └── test.ipynb
 ```
@@ -51,7 +47,7 @@ intrusion-network/
 1.  **Clone the repository:**
     ```bash
     git clone <repository_url>
-    cd intrusion-network
+    cd network-intrusion-detection
     ```
 
 2.  **Create a virtual environment (recommended):**
@@ -69,35 +65,32 @@ intrusion-network/
     ```
 
 4.  **Download the dataset:**
-    Ensure `data1.csv` is placed in the `data/processed/` directory. This file is expected to be the preprocessed dataset used for training.
+    Ensure `data.csv` is placed in the `data/processed/` directory. This file is expected to be the preprocessed dataset used for training.
 
 ## Usage
 
 ### 1. Data Splitting
 
-First, split the `data1.csv` into training, validation, and testing sets. This script will also save the `LabelEncoder`.
+First, split the `data.csv` into training, validation, and testing sets.
 
 ```bash
-python src/data/split_data.py
+python src/pretrained/split_data.py
 ```
 
-This will generate `train_data.csv`, `val_data.csv`, and `test_data.csv` in the `data/processed/` directory, and `label_encoder.joblib` in the `pretrained/` directory.
+This will generate `train_data.csv`, `val_data.csv`, and `test_data.csv` in the `data/processed/` directory.
 
-### 2. Data Analysis and Visualization
-
-To explore the dataset and visualize its features, open and run the `data_analysis.ipynb` notebook:
-
-```bash
-jupyter notebook src/data/data_analysis.ipynb
-```
-
-### 3. Model Training
+### 2. Model Training
 
 Train each model by running its respective training script:
 
-*   **Linear Regression:**
+*   **CNN:**
     ```bash
-    python src/model/linear_regression/train_linear_regression.py
+    python src/model/cnn/train_cnn.py
+    ```
+
+*   **Logistic Regression:**
+    ```bash
+    python src/model/logistic_regression/train_logistic_regression.py
     ```
 
 *   **Random Forest:**
@@ -105,9 +98,9 @@ Train each model by running its respective training script:
     python src/model/random_forest/train_random_forest.py
     ```
 
-*   **CNN:**
+*   **RNN:**
     ```bash
-    python src/model/cnn/train_cnn.py
+    python src/model/rnn/train_rnn.py
     ```
 
 *   **XGBoost:**
@@ -115,20 +108,20 @@ Train each model by running its respective training script:
     python src/model/xgboost/train_xgboost.py
     ```
 
-*   **RNN:**
-    ```bash
-    python src/model/rnn/train_rnn.py
-    ```
+Each script will train the model, evaluate it on the test set, print a classification report, and save the trained model to the `trained/` directory. For CNN, RNN and XGBoost, the training history (loss and accuracy per epoch) will also be saved.
 
-Each script will train the model, evaluate it on the test set, print a classification report, and save the trained model (e.g., `linear_regression_model.joblib`, `random_forest_model.joblib`, `xgboost_model.joblib`, `cnn_model.h5`, `rnn_model.h5`) to the `pretrained/` directory.
-
-### 4. Model Testing and Evaluation
+### 3. Model Testing and Evaluation
 
 To test and evaluate each trained model, open and run its respective `test.ipynb` notebook:
 
-*   **Linear Regression:**
+*   **CNN:**
     ```bash
-    jupyter notebook src/model/linear_regression/test.ipynb
+    jupyter notebook src/model/cnn/test.ipynb
+    ```
+
+*   **Logistic Regression:**
+    ```bash
+    jupyter notebook src/model/logistic_regression/test.ipynb
     ```
 
 *   **Random Forest:**
@@ -136,9 +129,9 @@ To test and evaluate each trained model, open and run its respective `test.ipynb
     jupyter notebook src/model/random_forest/test.ipynb
     ```
 
-*   **CNN:**
+*   **RNN:**
     ```bash
-    jupyter notebook src/model/cnn/test.ipynb
+    jupyter notebook src/model/rnn/test.ipynb
     ```
 
 *   **XGBoost:**
@@ -146,21 +139,16 @@ To test and evaluate each trained model, open and run its respective `test.ipynb
     jupyter notebook src/model/xgboost/test.ipynb
     ```
 
-*   **RNN:**
-    ```bash
-    jupyter notebook src/model/rnn/test.ipynb
-    ```
-
 These notebooks will load the saved models, make predictions on the test data, and display performance metrics including accuracy, classification reports, and confusion matrices.
 
-## Results Summary (Example)
+## Results Summary
 
-| Model             | Accuracy (Test Set) |
-| :---------------- | :------------------ |
-| Linear Regression | ~--.--%             |
-| Random Forest     | ~99.87%             |
-| CNN               | ~81.04%             |
-| XGBoost           | ~99.93%             |
-| RNN               | ~85.70%             |
+| Model               | Accuracy (Test Set) | Model Size |
+| :------------------ | :------------------ | :--------- |
+| CNN                 | 77.47%              | 239.79 KB  |
+| Logistic Regression | 74.66%              | 2.18 KB    |
+| Random Forest       | 99.95%              | 22.82 MB   |
+| RNN                 | 77.83%              | 205.89 KB  |
+| XGBoost             | 99.94%              | 1.58 MB    |
 
-*(Note: Actual results may vary slightly due to random seeds or environment differences.)*
+**Note on Logistic Regression:** The accuracy of the Logistic Regression model is much improved after replacing Linear Regression and scaling the data. Random Forest and XGBoost still show the best performance.
