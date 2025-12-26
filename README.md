@@ -143,12 +143,14 @@ These notebooks will load the saved models, make predictions on the test data, a
 
 ## Results Summary
 
-| Model               | Accuracy (Test Set) | Model Size |
-| :------------------ | :------------------ | :--------- |
-| CNN                 | 77.47%              | 239.79 KB  |
-| Logistic Regression | 74.66%              | 2.18 KB    |
-| Random Forest       | 99.95%              | 22.82 MB   |
-| RNN                 | 77.83%              | 205.89 KB  |
-| XGBoost             | 99.94%              | 1.58 MB    |
+After retraining all models, the following table summarizes the performance on the test set.
 
-**Note on Logistic Regression:** The accuracy of the Logistic Regression model is much improved after replacing Linear Regression and scaling the data. Random Forest and XGBoost still show the best performance.
+| Model               | Accuracy | Precision (Weighted) | Recall (Weighted) | F1-Score (Weighted) |
+| :------------------ | :------- | :------------------- | :---------------- | :------------------ |
+| Random Forest       | 1.00     | 1.00                 | 1.00              | 1.00                |
+| XGBoost             | 1.00     | 1.00                 | 1.00              | 1.00                |
+| CNN                 | 0.93     | 0.96                 | 0.93              | 0.93                |
+| RNN                 | 0.86     | 0.89                 | 0.86              | 0.85                |
+| Logistic Regression | 0.84     | 0.86                 | 0.84              | 0.83                |
+
+**Note:** The tree-based models (Random Forest and XGBoost) achieved near-perfect scores, which may indicate overfitting but also demonstrates their high effectiveness on this dataset. The neural network models (CNN and RNN) also performed well, followed by Logistic Regression.

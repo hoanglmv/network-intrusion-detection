@@ -1,0 +1,271 @@
+% --- PHẦN I ---
+\section*{PHẦN I: PHÂN TÍCH DỮ LIỆU}
+\addcontentsline{toc}{section}{PHẦN I: PHÂN TÍCH DỮ LIỆU} % Thêm vào mục lục vì dùng dấu *
+
+\subsection{Mô tả chung về tập dữ liệu CIC2023}
+\label{sub:mo-ta-du-lieu}
+Dự án này sử dụng bộ dữ liệu \textbf{CIC-IDS-2023}, một phiên bản cập nhật và mở rộng dựa trên nền tảng của bộ dữ liệu nổi tiếng \textbf{CSE-CIC-IDS2018}. Đây là một tập dữ liệu tiêu chuẩn, được công nhận rộng rãi trong cộng đồng nghiên cứu an ninh mạng, chuyên dùng cho việc huấn luyện và đánh giá các Hệ thống Phát hiện Xâm nhập (IDS). Bộ dữ liệu này được xây dựng bằng cách mô phỏng một môi trường mạng thực tế và ghi lại lưu lượng mạng trong một khoảng thời gian dài, bao gồm cả lưu lượng hợp lệ (\texttt{Benign}) và một loạt các loại tấn công mạng tinh vi, hiện đại.
+
+Để phục vụ cho việc phân tích, chúng tôi đã tổng hợp và làm việc trên \textbf{10 tệp CSV} đầu tiên từ bộ dữ liệu gốc. Tập dữ liệu tổng hợp này bao gồm hàng triệu bản ghi, mỗi bản ghi đại diện cho một luồng mạng (flow) và được mô tả bởi hơn 80 đặc trưng định lượng. Các đặc trưng này được trích xuất tự động từ các tệp ghi lại lưu lượng mạng (PCAP), bao gồm các thông số như: thời gian diễn ra luồng (\textit{flow duration}), tổng số gói tin đi và đến (\textit{packet counts}), kích thước trung bình của gói tin, các chỉ số thống kê về thời gian giữa các gói tin, và nhiều thuộc tính khác. 
+
+Quan trọng nhất, mỗi bản ghi đều được gán nhãn, xác định rõ đó là lưu lượng hợp lệ hay thuộc về một trong nhiều loại tấn công cụ thể. Các loại tấn công chính trong bộ dữ liệu bao gồm:
+\begin{itemize}
+    \item \textbf{DDoS (Distributed Denial-of-Service):} Tấn công từ chối dịch vụ phân tán, làm ngập lụt máy chủ mục tiêu bằng một lượng lớn yêu cầu từ nhiều nguồn khác nhau.
+    \item \textbf{PortScan:} Kỹ thuật quét các cổng mở trên một máy chủ để tìm ra các lỗ hổng dịch vụ có thể bị khai thác.
+    \item \textbf{Bot:} Lưu lượng được tạo ra bởi một mạng các máy tính bị nhiễm phần mềm độc hại (botnet), thường được điều khiển từ xa để thực hiện các hành vi tự động.
+    \item \textbf{Infiltration:} Các hành vi xâm nhập vào hệ thống, thường theo sau là các hoạt động leo thang đặc quyền hoặc đánh cắp dữ liệu.
+    \item \textbf{Web Attack:} Các loại tấn công nhắm vào ứng dụng web, như Brute Force, XSS, hoặc SQL Injection.
+    \item \textbf{FTP-Patator và SSH-Patator:} Tấn công dò mật khẩu (brute-force) vào các dịch vụ FTP và SSH.
+\end{itemize}
+
+\subsection{Phân tích dữ liệu khai phá (EDA)}
+\label{sub:eda}
+Trước khi đưa dữ liệu vào mô hình, quá trình Phân tích dữ liệu khai phá (EDA) được thực hiện nhằm thu được những hiểu biết sâu sắc về bản chất và cấu trúc của dữ liệu. Mục tiêu của giai đoạn này là xác định các đặc tính thống kê, phát hiện các vấn đề tiềm ẩn và định hướng cho các bước tiền xử lý tiếp theo.
+
+\begin{itemize}
+    \item \textbf{Phân phối nhãn (Label Distribution):} Biểu đồ phân phối của các nhãn trong Hình \ref{fig:label_dist_new} cho thấy tần suất xuất hiện của mỗi loại lưu lượng. Qua đó, ta thấy rằng bộ dữ liệu bị \textbf{mất cân bằng nghiêm trọng}, với lớp \texttt{Benign} (hợp lệ) chiếm một tỷ lệ áp đảo so với các lớp tấn công. Sự mất cân bằng này là một thách thức lớn, vì mô hình học máy có xu hướng thiên vị về phía lớp đa số và bỏ qua các lớp thiểu số (là các loại tấn công quan trọng cần phát hiện). Nếu không được xử lý, mô hình có thể đạt độ chính xác cao bằng cách dự đoán tất cả là \texttt{Benign}, nhưng lại thất bại hoàn toàn trong việc phát hiện xâm nhập.
+
+    \item \textbf{Tương quan đặc trưng (Feature Correlation):} Một ma trận tương quan dạng bản đồ nhiệt (Hình \ref{fig:corr_heatmap_new}) được tạo ra để phân tích mối quan hệ tuyến tính giữa các cặp đặc trưng số. Việc này giúp phát hiện ra các đặc trưng có độ tương quan cao (gần bằng 1 hoặc -1). Các cặp đặc trưng này cung cấp thông tin trùng lặp, có thể gây ra hiện tượng đa cộng tuyến (multicollinearity). Hiện tượng này đặc biệt ảnh hưởng đến các mô hình tuyến tính như Logistic Regression, làm cho các hệ số của mô hình trở nên không ổn định và khó diễn giải.
+\end{itemize}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../../figures/label_distribution.png}
+    \caption{Phân phối của các nhãn trong bộ dữ liệu.}
+    \label{fig:label_dist_new}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{../../figures/correlation_heatmap.png}
+    \caption{Bản đồ nhiệt tương quan của các đặc trưng.}
+    \label{fig:corr_heatmap_new}
+\end{figure}
+
+
+\subsection{Tiền xử lý dữ liệu}
+\label{sub:tien-xu-ly-du-lieu}
+Dựa trên những phát hiện từ giai đoạn EDA, một quy trình tiền xử lý dữ liệu nghiêm ngặt đã được thiết kế và thực hiện. Các bước này có vai trò cực kỳ quan trọng để "làm sạch" và chuẩn hóa dữ liệu, giúp các mô hình học máy có thể hoạt động hiệu quả nhất.
+
+\begin{itemize}
+    \item \textbf{Làm sạch dữ liệu:}
+        \begin{itemize}
+            \item Các giá trị vô hạn (\texttt{Infinity}) được thay thế bằng giá trị không xác định (\texttt{NaN}).
+            \item Toàn bộ các hàng chứa bất kỳ giá trị \texttt{NaN} nào sau đó đã bị loại bỏ để đảm bảo tính toàn vẹn của tập dữ liệu.
+            \item Tên của các cột đặc trưng được làm sạch bằng cách loại bỏ các khoảng trắng ở đầu và cuối, đảm bảo tính nhất quán khi truy cập.
+        \end{itemize}
+    \item \textbf{Mã hóa nhãn (Label Encoding):} Cột nhãn (\texttt{label}), chứa các giá trị kiểu chuỗi (ví dụ: 'Benign', 'DDoS', 'PortScan'), đã được chuyển đổi thành các giá trị số nguyên bằng cách sử dụng \texttt{LabelEncoder} của thư viện Scikit-learn. Quá trình này là bắt buộc vì các mô hình học máy chỉ làm việc với dữ liệu số.
+    \item \textbf{Phân chia dữ liệu (Data Splitting):} Dữ liệu đã xử lý được phân chia thành ba tập riêng biệt theo tỷ lệ:
+    \begin{itemize}
+        \item \textbf{Tập huấn luyện (Training set):} 80\% dữ liệu được dùng để huấn luyện các tham số của mô hình.
+        \item \textbf{Tập kiểm định (Validation set):} 10\% dữ liệu được dùng để tinh chỉnh các siêu tham số (hyperparameters) và đánh giá mô hình trong quá trình huấn luyện, giúp tránh hiện tượng quá khớp (overfitting).
+        \item \textbf{Tập kiểm tra (Testing set):} 10\% dữ liệu còn lại được giữ riêng hoàn toàn và chỉ được sử dụng một lần duy nhất để đánh giá hiệu năng cuối cùng của mô hình trên dữ liệu "vô hình" (unseen data).
+    \end{itemize}
+    \item \textbf{Chuẩn hóa đặc trưng (Feature Scaling):} Các mô hình nhạy cảm với thang đo của dữ liệu đầu vào như Logistic Regression, CNN, và RNN yêu cầu dữ liệu phải được chuẩn hóa. Chúng tôi đã sử dụng \texttt{StandardScaler} để biến đổi các đặc trưng, đưa chúng về cùng một thang đo với giá trị trung bình bằng 0 và phương sai bằng 1. Nếu không có bước này, các đặc trưng có thang đo lớn (ví dụ: số byte truyền) sẽ lấn át các đặc trưng có thang đo nhỏ (ví dụ: số cờ TCP), làm cho quá trình huấn luyện của các mô hình dựa trên gradient bị chậm lại và không ổn định.
+\end{itemize}
+\textit{Ghi chú hệ thống:} Do kích thước dữ liệu quá lớn, mô hình đã được huấn luyện để phát hiện 8 kiểu tấn công khác nhau bằng cách sử dụng 10 file log đại diện được chọn lọc.
+
+\subsection{EDA sau khi xử lý}
+Sau khi hoàn tất các bước tiền xử lý, một vòng phân tích dữ liệu khai phá ngắn được thực hiện lại. Mục đích là để xác nhận rằng các vấn đề đã xác định trước đó (giá trị thiếu, vô hạn, thang đo khác biệt) đã được giải quyết triệt để. Việc kiểm tra lại phân phối của các đặc trưng sau khi chuẩn hóa đảm bảo rằng dữ liệu đã sẵn sàng và ở định dạng tối ưu nhất để đưa vào các mô hình học máy, giảm thiểu rủi ro phát sinh lỗi trong quá trình huấn luyện.
+
+\vfill \pagebreak % Ngắt trang nếu cần sang phần mới
+
+% --- PHẦN II ---
+\section*{PHẦN II: CÁC MÔ HÌNH HỌC MÁY}
+\addcontentsline{toc}{section}{PHẦN II: CÁC MÔ HÌNH HỌC MÁY}
+
+\subsection{Các mô hình học máy đã sử dụng}
+Dưới đây là mô tả chi tiết và thuật toán mã giả (Pseudo-code) cho các mô hình đã được lựa chọn, triển khai và đánh giá trong dự án này.
+
+\subsubsection{Logistic Regression}
+\begin{itemize}
+    \item \textbf{Khái niệm:} Logistic Regression là một mô hình tuyến tính cơ bản nhưng rất hiệu quả, được sử dụng cho bài toán phân loại nhị phân và đa lớp. Mặc dù tên gọi có chứa "Regression", thực chất nó là một thuật toán phân loại, hoạt động bằng cách dự đoán xác suất một mẫu dữ liệu thuộc về một lớp cụ thể thông qua hàm sigmoid (cho bài toán nhị phân) hoặc softmax (cho bài toán đa lớp). Nó hoạt động tốt trên các bài toán có ranh giới quyết định tuyến tính và thường được dùng làm mô hình cơ sở (baseline) để so sánh với các thuật toán phức tạp hơn.
+    \item \textbf{Kiến trúc/Cấu hình:} Mô hình sử dụng triển khai \texttt{LogisticRegression} của thư viện Scikit-learn với siêu tham số \texttt{max\_iter=1000} để đảm bảo thuật toán có đủ số vòng lặp để hội tụ.
+    \item \textbf{Mã giả (Pseudo-code):}
+    \begin{verbatim}
+    Procedure Train_Logistic_Regression(TrainingData, Labels):
+        // Khởi tạo mô hình Logistic Regression
+        model = init_logistic_regression(max_iter=1000)
+        
+        // Huấn luyện mô hình trên dữ liệu huấn luyện
+        model.fit(TrainingData, Labels)
+        
+        return model
+    End Procedure
+    \end{verbatim}
+\end{itemize}
+
+\subsubsection{Random Forest}
+\begin{itemize}
+    \item \textbf{Khái niệm:} Random Forest là một thuật toán học có giám sát thuộc loại học tập theo tập hợp (ensemble learning). Nguyên lý hoạt động của nó là xây dựng một "rừng" gồm nhiều cây quyết định riêng lẻ trong quá trình huấn luyện. Mỗi cây được huấn luyện trên một mẫu ngẫu nhiên (bootstrap sample) của dữ liệu. Khi dự đoán, kết quả cuối cùng được quyết định bằng cách lấy biểu quyết (voting) từ tất cả các cây trong rừng. Mô hình này nổi tiếng về độ chính xác cao, khả năng chống nhiễu và ít bị quá khớp.
+    \item \textbf{Kiến trúc/Cấu hình:} Mô hình \texttt{RandomForestClassifier} được cấu hình với \texttt{n\_estimators=100}, tức là bao gồm 100 cây quyết định.
+    \item \textbf{Mã giả (Pseudo-code):}
+    \begin{verbatim}
+    Procedure Train_Random_Forest(TrainingData, Labels):
+        // Khởi tạo mô hình Random Forest với 100 cây
+        model = init_random_forest(n_estimators=100)
+
+        // Huấn luyện mô hình
+        model.fit(TrainingData, Labels)
+        
+        return model
+    End Procedure
+    \end{verbatim}
+\end{itemize}
+
+\subsubsection{XGBoost}
+\begin{itemize}
+    \item \textbf{Khái niệm:} XGBoost (eXtreme Gradient Boosting) là một thư viện tối ưu hóa và hiệu suất cao của thuật toán Gradient Boosting. Nó hoạt động bằng cách xây dựng tuần tự các mô hình yếu (thường là cây quyết định), trong đó mỗi mô hình mới sẽ cố gắng sửa các lỗi dự đoán của mô hình trước đó. XGBoost nổi tiếng về tốc độ tính toán, hiệu quả sử dụng tài nguyên và thường xuyên đạt được kết quả hàng đầu trong các cuộc thi Machine Learning.
+    \item \textbf{Kiến trúc/Cấu hình:} Mô hình \texttt{XGBClassifier} được sử dụng với 100 cây (\texttt{n\_estimators=100}) và hàm mục tiêu là \texttt{multi:softmax} để xử lý bài toán phân loại đa lớp.
+    \item \textbf{Mã giả (Pseudo-code):}
+    \begin{verbatim}
+    Procedure Train_XGBoost(TrainingData, Labels):
+        // Khởi tạo mô hình XGBoost
+        model = init_xgboost(n_estimators=100, objective='multi:softmax')
+
+        // Huấn luyện mô hình
+        model.fit(TrainingData, Labels)
+        
+        return model
+    End Procedure
+    \end{verbatim}
+\end{itemize}
+
+\subsubsection{Mạng nơ-ron tích chập 1D (1D-CNN)}
+\begin{itemize}
+    \item \textbf{Khái niệm:} Mạng nơ-ron tích chập (CNN) thường được biết đến qua các ứng dụng xử lý hình ảnh 2D, nhưng cũng có thể áp dụng hiệu quả cho dữ liệu dạng chuỗi hoặc vector 1D. Trong bài toán này, 1D-CNN có khả năng trượt các bộ lọc (kernel) dọc theo vector đặc trưng để học các mẫu cục bộ (local patterns). Điều này rất phù hợp để phát hiện các tổ hợp đặc trưng có ý nghĩa trong dữ liệu mạng, ví dụ như một chuỗi các giá trị bất thường của các đặc trưng đi liền nhau.
+    \item \textbf{Kiến trúc:}
+    \begin{enumerate}
+        \item Lớp \texttt{Conv1D} với 32 bộ lọc, kích thước kernel là 3, và hàm kích hoạt ReLU.
+        \item Lớp \texttt{MaxPooling1D} để giảm chiều dữ liệu và giữ lại thông tin quan trọng nhất.
+        \item Lớp \texttt{Dropout} với tỷ lệ 0.25 để chống quá khớp.
+        \item Lớp \texttt{Conv1D} thứ hai với 64 bộ lọc và kernel kích thước 3.
+        \item Lớp \texttt{MaxPooling1D} và \texttt{Dropout(0.25)} tiếp theo.
+        \item Lớp \texttt{Flatten} để chuyển đổi dữ liệu 2D thành vector 1D.
+        \item Lớp \texttt{Dense} (fully-connected) với 128 nơ-ron và hàm kích hoạt ReLU.
+        \item Lớp \texttt{Dropout} với tỷ lệ 0.5.
+        \item Lớp \texttt{Dense} đầu ra với số nơ-ron bằng số lớp và hàm kích hoạt Softmax.
+    \end{enumerate}
+    \item \textbf{Mã giả (Pseudo-code):}
+    \begin{verbatim}
+    Procedure Train_CNN(TrainingData, Labels):
+        // Xây dựng kiến trúc mô hình CNN như mô tả
+        model = build_cnn_model()
+
+        // Biên dịch mô hình với hàm mất mát và trình tối ưu hóa
+        model.compile(loss='categorical_crossentropy', optimizer='adam')
+        
+        // Huấn luyện mô hình
+        model.fit(TrainingData, Labels, epochs=10, batch_size=64)
+        
+        return model
+    End Procedure
+    \end{verbatim}
+\end{itemize}
+
+\subsubsection{Mạng nơ-ron hồi quy (RNN)}
+\begin{itemize}
+    \item \textbf{Khái niệm:} Mạng nơ-ron hồi quy (RNN) là một loại mạng nơ-ron được thiết kế đặc biệt cho dữ liệu có tính tuần tự hoặc chuỗi thời gian. Nó có các kết nối hồi quy cho phép thông tin được lưu truyền từ bước thời gian này sang bước thời gian tiếp theo, tạo thành một dạng "bộ nhớ" bên trong mạng. Trong bối cảnh này, vector đặc trưng của mỗi mẫu dữ liệu có thể được xem như một chuỗi có một bước thời gian, và RNN có thể học các phụ thuộc trong đó.
+    \item \textbf{Kiến trúc:}
+    \begin{enumerate}
+        \item Lớp \texttt{SimpleRNN} với 64 đơn vị, trả về chuỗi đầy đủ (\texttt{return\_sequences=True}).
+        \item Lớp \texttt{Dropout} với tỷ lệ 0.2.
+        \item Lớp \texttt{SimpleRNN} thứ hai với 32 đơn vị.
+        \item Lớp \texttt{Dropout} với tỷ lệ 0.2.
+        \item Lớp \texttt{Dense} với 128 nơ-ron và hàm kích hoạt ReLU.
+        \item Lớp \texttt{Dropout} với tỷ lệ 0.5.
+        \item Lớp \texttt{Dense} đầu ra với số nơ-ron bằng số lớp và hàm kích hoạt Softmax.
+    \end{enumerate}
+    \item \textbf{Mã giả (Pseudo-code):}
+    \begin{verbatim}
+    Procedure Train_RNN(TrainingData, Labels):
+        // Xây dựng kiến trúc mô hình RNN như mô tả
+        model = build_rnn_model()
+
+        // Biên dịch mô hình
+        model.compile(loss='categorical_crossentropy', optimizer='adam')
+        
+        // Huấn luyện mô hình
+        model.fit(TrainingData, Labels, epochs=10, batch_size=64)
+        
+        return model
+    End Procedure
+    \end{verbatim}
+\end{itemize}
+
+\subsection{So sánh kết quả thực nghiệm}
+\label{sec:danh-gia-va-so-sanh-cac-mo-hinh}
+Tất cả các mô hình đã được huấn luyện trên cùng một tập dữ liệu huấn luyện và được đánh giá trên tập kiểm tra chưa từng thấy. Hiệu suất của chúng được đo lường bằng các chỉ số tiêu chuẩn trong bài toán phân loại.
+
+\begin{itemize}
+    \item \textbf{Accuracy (Độ chính xác):} Tỷ lệ các dự đoán đúng trên tổng số dự đoán. Là chỉ số tổng quan nhất nhưng có thể gây hiểu lầm trên tập dữ liệu mất cân bằng.
+    \item \textbf{Precision (Độ chuẩn xác):} Tỷ lệ các mẫu được dự đoán là dương tính thực sự là dương tính. Chỉ số này đo lường mức độ "đáng tin" của các dự đoán tấn công.
+    \item \textbf{Recall (Độ phủ):} Khả năng của mô hình trong việc phát hiện ra tất cả các mẫu dương tính thực tế. Chỉ số này đo lường khả năng "không bỏ sót" tấn công.
+    \item \textbf{F1-Score:} Là trung bình điều hòa của Precision và Recall, cung cấp một thước đo cân bằng duy nhất giữa hai chỉ số này, đặc biệt hữu ích khi dữ liệu mất cân bằng.
+\end{itemize}
+
+Bảng \ref{tab:results_new} tóm tắt hiệu suất của các mô hình trên tập kiểm tra, sử dụng giá trị trung bình có trọng số (weighted average) để tính đến sự mất cân bằng của các lớp.
+
+\begin{table}[h!]
+    \centering
+    \captionsetup{justification=centering}
+    \caption{So sánh hiệu suất các mô hình trên tập kiểm tra.}
+    \label{tab:results_new}
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Mô hình} & \textbf{Accuracy} & \textbf{Precision (Weighted)} & \textbf{Recall (Weighted)} & \textbf{F1-Score (Weighted)} \\
+        \midrule
+        Random Forest       & 1.00     & 1.00                 & 1.00              & 1.00                \\
+        XGBoost             & 1.00     & 1.00                 & 1.00              & 1.00                \\
+        CNN (1D-CNN)        & 0.93     & 0.96                 & 0.93              & 0.93                \\
+        RNN                 & 0.86     & 0.89                 & 0.86              & 0.85                \\
+        Logistic Regression & 0.84     & 0.86                 & 0.84              & 0.83                \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsubsection{Phân tích kết quả}
+Từ bảng kết quả, có thể rút ra những nhận xét quan trọng:
+\begin{itemize}
+    \item Các mô hình dựa trên cây (tree-based) là \textbf{Random Forest} và \textbf{XGBoost} cho thấy hiệu suất vượt trội, đạt độ chính xác gần như tuyệt đối (1.00) trên tất cả các chỉ số. Điều này cho thấy khả năng mạnh mẽ của chúng trong việc học các quy tắc phân loại phức tạp và phi tuyến từ dữ liệu đặc trưng dạng bảng.
+    \item Các mô hình mạng nơ-ron sâu cũng hoạt động tốt, trong đó \textbf{1D-CNN} (F1-Score: 0.93) cho kết quả tốt hơn một chút so với \textbf{RNN} (F1-Score: 0.85). Điều này cho thấy khả năng trích xuất các mẫu cục bộ của CNN là phù hợp hơn với loại dữ liệu này.
+    \item \textbf{Logistic Regression}, với vai trò là mô hình cơ sở, cung cấp một hiệu suất khá (F1-Score: 0.83) nhưng bị các mô hình phức tạp hơn vượt qua đáng kể, khẳng định tính chất phi tuyến và phức tạp của bài toán.
+\end{itemize}
+
+\subsubsection{Ma trận nhầm lẫn (Confusion Matrix)}
+Để có cái nhìn chi tiết hơn về hiệu suất phân loại trên từng lớp, ma trận nhầm lẫn cho mỗi mô hình được trình bày trong các Hình \ref{fig:cm_lr_new} đến \ref{fig:cm_rnn_new}. Ma trận nhầm lẫn cho thấy số lượng các dự đoán đúng (trên đường chéo chính) và sai (các ô còn lại) cho mỗi loại tấn công, giúp xác định những loại tấn-công nào mô hình dễ bị nhầm lẫn với nhau hoặc với lưu lượng hợp lệ. Ví dụ, trong ma trận nhầm lẫn của Logistic Regression (Hình \ref{fig:cm_lr_new}), có thể quan sát thấy một số lượng đáng kể các mẫu 'PortScan' bị phân loại nhầm thành 'DDoS'. Điều này có thể là do cả hai loại tấn công này đều có đặc điểm chung là tạo ra một lượng lớn các kết nối mạng trong thời gian ngắn, và mô hình tuyến tính gặp khó khăn trong việc phân biệt các sắc thái tinh vi hơn giữa chúng. Ngược lại, ma trận của Random Forest (Hình \ref{fig:cm_rf_new}) cho thấy một đường chéo gần như hoàn hảo, chứng tỏ khả năng phân loại chính xác gần như tuyệt đối của nó trên tập dữ liệu này.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../../figures/logistic_regression_confusion_matrix.png}
+    \caption{Ma trận nhầm lẫn cho Logistic Regression.}
+    \label{fig:cm_lr_new}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../../figures/random_forest_confusion_matrix.png}
+    \caption{Ma trận nhầm lẫn cho Random Forest.}
+    \label{fig:cm_rf_new}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../../figures/xgboost_confusion_matrix.png}
+    \caption{Ma trận nhầm lẫn cho XGBoost.}
+    \label{fig:cm_xgb_new}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../../figures/cnn_confusion_matrix.png}
+    \caption{Ma trận nhầm lẫn cho 1D-CNN.}
+    \label{fig:cm_cnn_new}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../../figures/rnn_confusion_matrix.png}
+    \caption{Ma trận nhầm lẫn cho RNN.}
+    \label{fig:cm_rnn_new}
+\end{figure}

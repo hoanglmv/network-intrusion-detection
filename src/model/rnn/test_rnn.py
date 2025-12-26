@@ -14,9 +14,9 @@ project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(o
 processed_data_dir = os.path.join(project_root, "data", "processed")
 original_data_path = os.path.join(processed_data_dir, "data.csv")
 test_data_path = os.path.join(processed_data_dir, "test_data.csv")
-model_path = os.path.join(project_root, "trained", "cnn_model.h5")
+model_path = os.path.join(project_root, "trained", "rnn_model.h5")
 report_dir = os.path.join(project_root, "report")
-confusion_matrix_path = os.path.join(report_dir, "cnn_confusion_matrix.png")
+confusion_matrix_path = os.path.join(report_dir, "rnn_confusion_matrix.png")
 
 # Create report directory if it doesn't exist
 os.makedirs(report_dir, exist_ok=True)
@@ -38,7 +38,7 @@ y_test = test_df['label']
 # Preprocess the data using the same scaler and reshaping from training
 scaler = StandardScaler()
 X_test_scaled = scaler.fit_transform(X_test)
-X_test_reshaped = np.expand_dims(X_test_scaled, axis=2)
+X_test_reshaped = np.reshape(X_test_scaled, (X_test_scaled.shape[0], X_test_scaled.shape[1], 1))
 
 # Make predictions
 pred_probs = model.predict(X_test_reshaped)
@@ -48,7 +48,7 @@ y_pred = np.argmax(pred_probs, axis=1)
 accuracy = accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred, target_names=class_names)
 
-print(f"CNN Model Evaluation")
+print(f"RNN Model Evaluation")
 print("="*40)
 print(f"Accuracy: {accuracy:.4f}\n")
 print("Classification Report:")
@@ -58,7 +58,7 @@ print(report)
 cm = confusion_matrix(y_test, y_pred)
 plt.figure(figsize=(12, 10))
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
-plt.title('CNN Confusion Matrix')
+plt.title('RNN Confusion Matrix')
 plt.ylabel('Actual')
 plt.xlabel('Predicted')
 plt.savefig(confusion_matrix_path)
