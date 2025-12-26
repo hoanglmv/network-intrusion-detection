@@ -43,7 +43,7 @@ def perform_eda():
     print(df.describe())
 
     # Clean up column names by stripping leading/trailing spaces
-    df.columns = df.columns.str.strip()
+    df.columns = df.columns.str.strip().str.replace(' ', '_')
 
     # --- Label Distribution ---
     print("\n--- Analyzing Label Distribution ---")
@@ -84,7 +84,68 @@ def perform_eda():
     else:
         print("No numeric columns available for correlation analysis after cleaning.")
 
+    # --- Numerical Feature Distribution ---
+    print("\n--- Analyzing Numerical Feature Distributions ---")
+    # Select some key numerical features to plot
+    key_numerical_features = [
+        'flow_duration', 'Header_Length', 'Protocol_Type', 'Duration', 'Rate', 'Srate'
+    ]
+    # Filter out features that are not in the dataframe
+    key_numerical_features = [feat for feat in key_numerical_features if feat in df.columns]
+
+    if key_numerical_features:
+        plot_numerical_distributions(df, key_numerical_features, figure_dir)
+        plot_numerical_boxplots(df, key_numerical_features, 'label', figure_dir)
+    else:
+        print("None of the selected key numerical features are in the DataFrame.")
+
     print("\nEDA script execution finished.")
+
+
+def plot_numerical_distributions(df, features, figure_dir):
+    """
+    Plots and saves the distribution of numerical features.
+    """
+    print(f"Plotting distributions for: {', '.join(features)}")
+    for feature in features:
+        plt.figure(figsize=(10, 6))
+        sns.histplot(df[feature], kde=True, bins=50)
+        plt.title(f'Distribution of {feature}')
+        plt.xlabel(feature)
+        plt.ylabel('Frequency')
+        # Use log scale for features with high skewness
+        if df[feature].skew() > 3:
+            plt.yscale('log')
+            plt.title(f'Distribution of {feature} (Log Scale)')
+        plt.tight_layout()
+        dist_path = os.path.join(figure_dir, f"{feature}_distribution.png")
+        plt.savefig(dist_path)
+        plt.close()
+        print(f"Saved {feature} distribution plot to: {dist_path}")
+
+
+def plot_numerical_boxplots(df, features, target_col, figure_dir):
+    """
+    Plots and saves boxplots of numerical features against a target column.
+    """
+    print(f"Plotting boxplots for: {', '.join(features)}")
+    for feature in features:
+        plt.figure(figsize=(12, 8))
+        sns.boxplot(x=target_col, y=feature, data=df)
+        plt.title(f'{feature} by {target_col}')
+        plt.xlabel(target_col)
+        plt.ylabel(feature)
+        plt.xticks(rotation=45)
+        # Use log scale for features with high skewness
+        if df[feature].skew() > 3:
+            plt.yscale('log')
+            plt.title(f'{feature} by {target_col} (Log Scale)')
+        plt.tight_layout()
+        boxplot_path = os.path.join(figure_dir, f"{feature}_vs_{target_col}_boxplot.png")
+        plt.savefig(boxplot_path)
+        plt.close()
+        print(f"Saved {feature} vs {target_col} boxplot to: {boxplot_path}")
+
 
 if __name__ == '__main__':
     perform_eda()

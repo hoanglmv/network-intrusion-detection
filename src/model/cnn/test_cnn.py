@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import os
 import seaborn as sns
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # Thư viện vẽ đồ thị
 
 # Get the project root directory
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -15,8 +15,12 @@ processed_data_dir = os.path.join(project_root, "data", "processed")
 original_data_path = os.path.join(processed_data_dir, "data.csv")
 test_data_path = os.path.join(processed_data_dir, "test_data.csv")
 model_path = os.path.join(project_root, "trained", "cnn_model.h5")
+
+# Paths for history and reports
+history_path = os.path.join(project_root, "trained", "cnn_history.csv")
 report_dir = os.path.join(project_root, "report")
 confusion_matrix_path = os.path.join(report_dir, "cnn_confusion_matrix.png")
+loss_plot_report_path = os.path.join(report_dir, "cnn_training_loss.png") # Đường dẫn ảnh biểu đồ trong report
 
 # Create report directory if it doesn't exist
 os.makedirs(report_dir, exist_ok=True)
@@ -63,6 +67,40 @@ plt.ylabel('Actual')
 plt.xlabel('Predicted')
 plt.savefig(confusion_matrix_path)
 plt.close()
-
 print(f"\nConfusion matrix saved to: {confusion_matrix_path}")
+
+# --- VẼ LẠI BIỂU ĐỒ LOSS TỪ FILE HISTORY CHO BÁO CÁO ---
+if os.path.exists(history_path):
+    print("Generating loss plot from training history...")
+    history_df = pd.read_csv(history_path)
+    
+    plt.figure(figsize=(12, 5))
+
+    # Vẽ biểu đồ Loss
+    plt.subplot(1, 2, 1)
+    plt.plot(history_df['loss'], label='Train Loss')
+    plt.plot(history_df['val_loss'], label='Validation Loss')
+    plt.title('Training & Validation Loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend()
+    plt.grid(True)
+
+    # Vẽ biểu đồ Accuracy
+    plt.subplot(1, 2, 2)
+    plt.plot(history_df['accuracy'], label='Train Accuracy')
+    plt.plot(history_df['val_accuracy'], label='Validation Accuracy')
+    plt.title('Training & Validation Accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend()
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.savefig(loss_plot_report_path)
+    plt.close()
+    print(f"Loss/Accuracy plot saved to: {loss_plot_report_path}")
+else:
+    print(f"Warning: Could not find history file at {history_path}. Skipping plot generation.")
+
 print("Test script execution finished.")

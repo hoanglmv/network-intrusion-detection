@@ -1,0 +1,3 @@
+Đối với mô hình Random Forest (trong `train_random_forest.py`), việc vẽ đồ thị loss và accuracy theo từng "epoch" là không phù hợp. Mô hình này không được huấn luyện lặp đi lặp lại qua các epoch như các mô hình mạng nơ-ron hoặc các thuật toán dựa trên gradient. Thay vào đó, nó xây dựng một tập hợp các cây quyết định một cách độc lập.
+
+Vì vậy, tôi sẽ bỏ qua việc sửa đổi file này và tiếp tục với các mô hình CNN và RNN.

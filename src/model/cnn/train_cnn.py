@@ -1,4 +1,3 @@
-
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
@@ -7,6 +6,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout
 import os
+import matplotlib.pyplot as plt
 
 # Get the project root directory
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -17,7 +17,8 @@ train_data_path = os.path.join(processed_data_dir, "train_data.csv")
 val_data_path = os.path.join(processed_data_dir, "val_data.csv")
 test_data_path = os.path.join(processed_data_dir, "test_data.csv")
 model_output_path = os.path.join(project_root, "trained", "cnn_model.h5")
-history_output_path = os.path.join(project_root, "trained", "cnn_history.csv")
+loss_plot_output_path = os.path.join(project_root, "trained", "cnn_loss.png")
+acc_plot_output_path = os.path.join(project_root, "trained", "cnn_accuracy.png")
 
 # Load the datasets
 train_df = pd.read_csv(train_data_path)
@@ -75,7 +76,7 @@ history = model.fit(X_train_reshaped, y_train,
                     validation_data=(X_val_reshaped, y_val),
                     verbose=1)
 
-# Evaluate the model
+# --- FINAL EVALUATION ---
 loss, accuracy = model.evaluate(X_test_reshaped, y_test, verbose=1)
 print(f'Test Accuracy: {accuracy:.4f}')
 print(f'Test Loss: {loss:.4f}')
@@ -86,10 +87,32 @@ y_pred = np.argmax(y_pred_probs, axis=1)
 print("Classification Report:")
 print(classification_report(y_test, y_pred))
 
-# Save training history
-history_df = pd.DataFrame(history.history)
-history_df.to_csv(history_output_path, index=False)
-
 # Save the model
 model.save(model_output_path)
 print(f"Model saved to {model_output_path}")
+
+# --- VẼ VÀ LƯU BIỂU ĐỒ LOSS ---
+plt.figure(figsize=(10, 6))
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('CNN Model Loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(loc='upper right')
+plt.grid(True)
+plt.savefig(loss_plot_output_path)
+plt.close()
+print(f"Loss plot saved to {loss_plot_output_path}")
+
+# --- VẼ VÀ LƯU BIỂU ĐỒ ACCURACY ---
+plt.figure(figsize=(10, 6))
+plt.plot(history.history['accuracy'], label='Train Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('CNN Model Accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(loc='lower right')
+plt.grid(True)
+plt.savefig(acc_plot_output_path)
+plt.close()
+print(f"Accuracy plot saved to {acc_plot_output_path}")
